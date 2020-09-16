@@ -43,8 +43,8 @@ def delete_player_season_total():
     return str(num_rows_deleted) + ' Registos borrados'
 
 
-@app.route('/')
-def hello_world():
+@app.route('/fill/team-box')
+def fill_team_box_score():
     dates = db.session.query(distinct(PlayerBoxScore.date)).all()
     for date in dates:
         date_time_obj = datetime.strptime(str(date), "('%Y-%m-%d',)")
@@ -57,3 +57,8 @@ def hello_world():
             db.session.add(new_team_box_score)
             db.session.commit()
     return str(dates)
+
+
+@app.route('/')
+def hello_world():
+    return 'The server is working :D'
