@@ -5,6 +5,7 @@ from app.models.player_season_totals import PlayerSeasonTotals
 from app.models.player_box_score import PlayerBoxScore
 from app.models.team_box_score import TeamBoxScore
 from app.schemas.team_box_score import team_box_score_schema, teams_box_score_schema
+from app.schemas.player_season_totals import players_season_total_schema
 from app.db import db
 from app.models import create_player_season_total, create_player_box_score, create_team_box_score
 from sqlalchemy import distinct
@@ -82,6 +83,12 @@ def team_list():
 def team_season_results(team):
     teams = TeamBoxScore.query.filter_by(team=team).all()
     return teams_box_score_schema.jsonify(teams)
+
+
+@app.route('/team_players/<team>')
+def get_team_players(team):
+    players = PlayerSeasonTotals.query.filter_by(team=team).all()
+    return players_season_total_schema.jsonify(players)
 
 
 @app.route('/matches')
