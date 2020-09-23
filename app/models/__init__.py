@@ -1,6 +1,7 @@
 from app.models.player_season_totals import PlayerSeasonTotals
 from app.models.player_box_score import PlayerBoxScore
 from app.models.team_box_score import TeamBoxScore
+from app.models.team_match_result_prediction import TeamMatchResultPrediction
 
 
 def create_team_box_score(team, date):

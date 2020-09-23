@@ -12,7 +12,10 @@ from sqlalchemy import distinct
 import json
 from flask import jsonify
 from datetime import datetime
+from app.simulation.nbaPredict import make_interpret_predictions
+import numpy as np
 import os
+import re
 
 current_path = os.path.dirname(__file__)
 
@@ -96,6 +99,7 @@ def get_matches():
     path = os.path.join(current_path, '../db/raw/matches.sql')
     path = os.path.abspath(path)
     result = db.session.execute(open(path, 'r').read())
+    # print([dict(row) for row in result])
     return jsonify([dict(row) for row in result])
 
 
@@ -114,3 +118,69 @@ def total_stats_by_team():
     result = db.session.execute(open(path, 'r').read())
     return jsonify([dict(row) for row in result])
 
+
+@app.route('/prediction')
+def prediction():
+    path = os.path.join(current_path, '../db/raw/matches.sql')
+    path = os.path.abspath(path)
+    result = db.session.execute(open(path, 'r').read())
+    # print([dict(row) for row in result])
+    to_json = [dict(row) for row in result]
+    # print('Numero de fechas', len(to_json))
+    for val in to_json[1:5]:
+        date_time_obj = datetime.strptime(str(val['date']), "%Y-%m-%d")
+        date_converted = date_time_obj.strftime('%m/%d/%Y')
+        result = make_interpret_predictions(str(date_converted), '2019-20', '10/22/2019')
+        for team_match_result in result:
+            db.session.add(team_match_result)
+            db.session.commit()
+    return 'buena'
+    # result = make_interpret_predictions('12/01/2019', '2019-20', '10/22/2019')
+    # for team_match_result in result:
+    # db.session.add(team_match_result)
+    # db.session.commit()
+
+
+@app.route('/prediction_result')
+def prediction_result():
+    path = os.path.join(current_path, '../db/raw/predict_percentage.sql')
+    path = os.path.abspath(path)
+    result = db.session.execute(open(path, 'r').read())
+    games = [dict(row) for row in result]
+    season_result = []
+    for game in games:
+        game_result = define_winner(
+            game['home_team'],
+            game['prediction_home_team'],
+            game['away_team'],
+            game['prediction_away_team']
+        )
+        game['winner'] = game_result[0]
+        game['loser'] = game_result[1]
+    teams = TeamBoxScore.query.with_entities(TeamBoxScore.team).distinct(TeamBoxScore.team).all()
+    for team in teams:
+        team = str(team).replace("('", '').replace("',)", '')
+        team_season_results = {
+            "team": team,
+            "total_win": 0,
+            "total_loss": 0
+        }
+        for game in games:
+            if game['winner'] == team:
+                team_season_results['total_win'] += 1
+            elif game['loser'] == team:
+                team_season_results['total_loss'] += 1
+        season_result.append(team_season_results)
+    print(season_result)
+
+    return jsonify({
+        "games": games,
+        "season_result": season_result
+    })
+
+
+def define_winner(home_team, prediction_home_team, away_team, prediction_away_team):
+    if float(np.random.rand()) < float(prediction_home_team):
+        return [home_team, away_team]
+    else:
+        return [away_team, home_team]
