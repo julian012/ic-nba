@@ -97,3 +97,11 @@ def get_matches():
     path = os.path.abspath(path)
     result = db.session.execute(open(path, 'r').read())
     return jsonify([dict(row) for row in result])
+
+
+@app.route('/percentage_made_by_teams')
+def percentage_made_by_teams():
+    path = os.path.join(current_path, '../db/raw/percentage_made_by_team.sql')
+    path = os.path.abspath(path)
+    result = db.session.execute(open(path, 'r').read())
+    return jsonify([dict(row) for row in result])
