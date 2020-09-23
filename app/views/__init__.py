@@ -3,12 +3,17 @@ from basketball_reference_web_scraper import client
 from basketball_reference_web_scraper.data import OutputType
 from app.models.player_season_totals import PlayerSeasonTotals
 from app.models.player_box_score import PlayerBoxScore
+from app.models.team_box_score import TeamBoxScore
+from app.schemas.team_box_score import team_box_score_schema, teams_box_score_schema
 from app.db import db
 from app.models import create_player_season_total, create_player_box_score, create_team_box_score
 from sqlalchemy import distinct
 import json
 from flask import jsonify
 from datetime import datetime
+import os
+
+current_path = os.path.dirname(__file__)
 
 
 @app.route('/fill/<year>', methods=['GET'])
@@ -59,6 +64,29 @@ def fill_team_box_score():
     return str(dates)
 
 
-@app.route('/')
-def hello_world():
-    return 'The server is working :D'
+@app.route('/teams_season_results')
+def teams_season_results():
+    path = os.path.join(current_path, '../db/raw/team_season_results.sql')
+    path = os.path.abspath(path)
+    result = db.session.execute(open(path, 'r').read())
+    return jsonify([dict(row) for row in result])
+
+
+@app.route('/team_list')
+def team_list():
+    teams = TeamBoxScore.query.with_entities(TeamBoxScore.team).distinct(TeamBoxScore.team).all()
+    return teams_box_score_schema.jsonify(teams)
+
+
+@app.route('/team_season_results/<team>')
+def team_season_results(team):
+    teams = TeamBoxScore.query.filter_by(team=team).all()
+    return teams_box_score_schema.jsonify(teams)
+
+
+@app.route('/matches')
+def get_matches():
+    path = os.path.join(current_path, '../db/raw/matches.sql')
+    path = os.path.abspath(path)
+    result = db.session.execute(open(path, 'r').read())
+    return jsonify([dict(row) for row in result])
