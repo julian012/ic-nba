@@ -105,3 +105,12 @@ def percentage_made_by_teams():
     path = os.path.abspath(path)
     result = db.session.execute(open(path, 'r').read())
     return jsonify([dict(row) for row in result])
+
+
+@app.route('/total_stats_by_team')
+def total_stats_by_team():
+    path = os.path.join(current_path, '../db/raw/total_stats_teams.sql')
+    path = os.path.abspath(path)
+    result = db.session.execute(open(path, 'r').read())
+    return jsonify([dict(row) for row in result])
+
